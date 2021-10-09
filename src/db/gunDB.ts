@@ -1,4 +1,4 @@
-import Gun from "gun";
+import Gun, { SEA } from "gun";
 import 'gun/axe'
 import 'gun/sea'
 import { IGunChainReference } from "gun/types/chain";

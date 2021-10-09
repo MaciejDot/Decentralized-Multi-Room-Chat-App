@@ -1,13 +1,14 @@
-import { Avatar, Box, Button, ButtonGroup, CssBaseline, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton, InputAdornment, Link, Paper, TextField, Tooltip, Typography } from "@material-ui/core"
+import { Avatar, Box, Button, ButtonGroup, Card, CssBaseline, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton, InputAdornment, Link, Paper, TextField, Tooltip, Typography, useMediaQuery } from "@material-ui/core"
 import { AccountCircle, ArrowBackIos, Chat, DeleteForever, Lock, LockOutlined } from "@material-ui/icons";
 import { Alert } from "@material-ui/lab";
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { useToggle } from "react-use";
 import { destroySavedAppData, user } from "../../db/gunDB";
 import useTypedStyles from "../../hooks/useTypedStyles";
 import { notify } from "../../notification/Notification";
 import { loginClasses } from "../../theme/loginClasses";
 import { DeleteAllDialog } from "../deleteAllDialog/DeleteAllDialog";
+import { NetworkGraphVisualization } from "../networkGraph/NetworkGraphVisualization";
 
 function Copyright() {
     return (
@@ -49,19 +50,26 @@ export const Login = () => {
             loginHandler()
         })
     }
+    const matches = useMediaQuery('(max-width:501px)');
 
     const [deleteAllDialogIsOpen, setIsDeleteDialogIsOpen] = useToggle(false)
 
-    return <Grid container component="main" className={classes.root}>
-      <CssBaseline />
-      <Grid item xs={false} sm={4} md={7} className={classes.image} />
-      <Grid item xs={12} sm={8} md={5} component={Paper} elevation={6} square>
-        <div className={classes.paper}>
+    const CardWrapper :any = useMemo(()=>  matches ? (props:{children:any}) =><div style={{backgroundColor:'#424242', minHeight:'100vh', minWidth:'100vw'}}>{props.children}</div>:(props:{children:any}) =><Card style=
+    {{zIndex: 1, position: 'absolute', width: '500px',
+    maxWidth: '100%',
+     margin: 0,
+     transform: !matches && 'translateY(15%)',
+     msTransform: !matches && 'translateY(15%)',
+    minHeight: matches && '100vh',
+    }}>{props.children}</Card>,[matches])
+    
+    return <CardWrapper>
+        <form className={classes.paper}>
             
           <Avatar className={classes.avatar}>
             <Chat />
           </Avatar>
-          <Typography component="h1" variant="h5">
+          <Typography component="h1" variant="h5" style={{color:'#fff'}}>
           Decentralized Multi Room Chat
           </Typography>
             <TextField
@@ -143,8 +151,6 @@ export const Login = () => {
                 isOpen={deleteAllDialogIsOpen}
                 close={()=>setIsDeleteDialogIsOpen()}
             />
-            </div>
-      </Grid>
-    
-      </Grid>
+            </form>
+      </CardWrapper>
 }

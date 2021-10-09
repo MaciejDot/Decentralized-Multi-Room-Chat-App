@@ -11,14 +11,16 @@ import { Dashboard } from "./components/Dashboard/Dashboard";
 import { ThemeProvider } from "@material-ui/styles";
 import { initialThemeSettings, ThemeSettings } from "./settings/theme/themeSettings";
 import { UserSettings } from "./components/userSettings/UserSettings";
-import { createTheme, ThemeOptions } from "@material-ui/core";
+import { createTheme, ThemeOptions, useMediaQuery } from "@material-ui/core";
+import Color from 'color'
+import { NetworkGraphVisualization } from "./components/networkGraph/NetworkGraphVisualization";
+import { Room } from "./components/Room/Room";
 function App() {
   const [isLoading, setIsLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [themeSettings, setThemeSettings] = useState(initialThemeSettings)
-  
   useEffect(() => {
-    (gunDB as any).on('auth', async(event) => {
+      (gunDB as any).on('auth', async(event) => {
         const alias = await user.get('alias'); 
         notify(`Logged in as ${alias}`, 'success')
         setIsAuthenticated(true)
@@ -34,8 +36,8 @@ function App() {
 
   const setupColor = (color: string, contrastText: string) =>({
     main: color,
-    dark: color,
-    light: color,
+    dark: Color(color, 'hex').darken(0.3).hex(),
+    light: Color(color,'hex').lighten(0.3).hex(),
     contrastText: contrastText
   })
 
@@ -58,10 +60,13 @@ function App() {
 
 
   useEffect(()=>{
-    user.recall({sessionStorage: true}, 'recall');
-  },[])
+      const is = (user.recall({sessionStorage: true}, 'recall') as any).is;
+      setIsLoading(false);
+      if(is){
+        setIsAuthenticated(true)
+      }
 
-  useTimeoutFn(()=> setIsLoading(false), 50)
+  },[])
 
   const PrivateRoute = (props: {path: string, title: () =>string, children?:ReactNode}) => {
     return <Route path={props.path} exact><Helmet>
@@ -73,9 +78,14 @@ function App() {
     </Route>
   }
 
-  return <ThemeProvider theme={theme}>{isLoading  ? 
-  <> "is Loading..."</>
-    :    <><Toaster
+  const matches = useMediaQuery('(max-width:501px)')
+
+
+  return <ThemeProvider theme={theme}>
+    <div style={{justifyContent: 'center', display: 'flex'}}>
+    {/*background*/}
+    {!isLoading  && !isAuthenticated  && !matches && <NetworkGraphVisualization/>}
+    {!isLoading  && <div style={{position:'absolute', width:'100vw', justifyContent: 'center', display: 'flex'}}><Toaster
     >
         {(t) => <>{resolveValue(t.message, t)}</>}
         </Toaster>
@@ -85,6 +95,9 @@ function App() {
      <PrivateRoute path="/" title={() =>`Dashboard`}>
         <Dashboard/>
      </PrivateRoute>
+     <PrivateRoute path="/room" title={() =>`Room`}>
+         <Room/>
+      </PrivateRoute>
       <PrivateRoute path="/settings" title={() =>`Settings`}>
          <UserSettings/>
       </PrivateRoute></>:
@@ -92,7 +105,7 @@ function App() {
         <Login/>
       </Route>
         }
-   </Switch></>}</ThemeProvider>
+   </Switch></div>}</div></ThemeProvider>
 }
 
 export default App;
