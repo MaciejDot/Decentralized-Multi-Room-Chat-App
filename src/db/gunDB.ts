@@ -3,7 +3,7 @@ import 'gun/axe'
 import 'gun/sea'
 import { IGunChainReference } from "gun/types/chain";
 import { UserDefinitionProp } from "./userDefinition/RestrictedUserDefinition";
-
+//https://gun.eco/docs/SEA.certify
 export const gunDB = Gun();
 
 export const user = gunDB.user() as IGunChainReference<UserDefinitionProp,any, false>;
