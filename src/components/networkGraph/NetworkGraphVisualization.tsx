@@ -98,12 +98,14 @@ export const NetworkGraphVisualization = () => {
         });
     }, [nodes, width, adjustedHeight, connections])
 
-    const classes = useTypedStyles(networkGraphClasses, true);
+    const classes = useTypedStyles(networkGraphClasses);
+
+    const staticClasses = useMemo(()=>classes, [])
 
     return <canvas
         ref={canvasRef}
         width={width}
         height={adjustedHeight}
-        className={classes.plane}
+        className={staticClasses.plane}
     />;
 }

@@ -1,16 +1,12 @@
 import { Button, Card, CardContent, CardHeader, Grid, InputAdornment, TextField, Typography } from "@material-ui/core"
 import { Lock, MeetingRoom } from "@material-ui/icons"
 import { useState } from "react"
-import { gunDB, user } from "../../../db/gunDB";
-
 export const SearchForRoom = () => {
     const [roomName, setRoomName] = useState("");
     const [roomPassword, setRoomPassword] = useState("");
 
     const onJoinRoom = () =>{
         //cyphered
-        const certifcate = (user as any).is.alias;
-        gunDB.get("room").get(roomName);
     }
 
     return<Card>

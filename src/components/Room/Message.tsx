@@ -53,7 +53,7 @@ const useStyles = makeStyles((theme: Theme) =>
       marginBottom: "10px",
       padding: "10px",
       backgroundColor: "#f8e896",
-      width: "60%",
+      maxWidth: "60%",
       //height: "50px",
       textAlign: "left",
       font: "400 .9em 'Open Sans', sans-serif",

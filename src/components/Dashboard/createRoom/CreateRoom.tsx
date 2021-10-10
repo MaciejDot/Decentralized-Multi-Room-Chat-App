@@ -1,7 +1,6 @@
 import { Button, Card, CardContent, CardHeader, Grid, InputAdornment, TextField, Typography } from "@material-ui/core";
 import { Lock, MeetingRoom } from "@material-ui/icons";
 import { useState } from "react";
-import { gunDB, user } from "../../../db/gunDB";
 
 export const CreateRoom = () => {
     const [roomName, setRoomName] = useState("");
@@ -9,9 +8,6 @@ export const CreateRoom = () => {
 
     const onCreateRoom = () => {
         //cyphered
-        const certifcate = (user as any).is.alias;
-        console.log(certifcate)
-        gunDB.get("room").get(roomName);
     }
 
     return <Card>

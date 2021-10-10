@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
@@ -9,19 +9,17 @@ import MenuItem from '@material-ui/core/MenuItem';
 import Menu from '@material-ui/core/Menu';
 import useTypedStyles from '../../hooks/useTypedStyles'
 import { appMenuClasses } from '../../theme/appMenuClasses'
-import { user } from '../../db/gunDB';
-import { ChevronLeft, DeleteForever, Lock, Search, Settings } from '@material-ui/icons';
+import { ChevronLeft,  Lock, Search, Settings } from '@material-ui/icons';
 import { useToggle } from 'react-use';
-import { DeleteAllDialog } from '../deleteAllDialog/DeleteAllDialog';
-import { Container, CssBaseline, Divider, Drawer, List, ListItem, ListItemIcon, ListItemText } from '@material-ui/core';
+import { Container, CssBaseline, Divider, Drawer, List, ListItem, ListItemIcon, ListItemText, Tooltip } from '@material-ui/core';
 import clsx from 'clsx';
 import { Link } from 'react-router-dom';
+import { getAuthUser } from '../../db';
 
 export const AppMenu = (props: {children?:any}) =>{
   const classes = useTypedStyles(appMenuClasses);
   const [anchorEl, setAnchorEl] = React.useState(null);
   const open = Boolean(anchorEl);
- const [isDeleteAllDialogOpen, setIsDeleteAllDialogOpen] = useToggle(false)
   const handleMenu = (event) => {
     setAnchorEl(event.currentTarget);
   };
@@ -31,24 +29,8 @@ export const AppMenu = (props: {children?:any}) =>{
   };
 
   const onLogout = () =>{
-      user.leave();
+      getAuthUser().leave();
       document.location.reload();
-  }
-
-  const [alias, setAlias] = useState('')
-
-  const init = async()=>{
-    const name = (await user.get("alias").on(data => setAlias(data))) as any as string;
-    name && setAlias(name)
-  }
-
-  useEffect(()=>{
-init()
-  },[])
-
-  const onDeleteAllDialogOpen=()=>{
-    handleClose()
-    setIsDeleteAllDialogOpen()
   }
 
   const [drawerIsOpen, setDrawerOpen] = useToggle(false);
@@ -87,7 +69,7 @@ init()
                 color="inherit"
               >
                 <AccountCircle />
-                <Typography variant="subtitle1">{alias}</Typography>
+                <Typography variant="subtitle1">{getAuthUser().is.alias}</Typography>
               </IconButton>
               <Menu
                 id="menu-appbar"
@@ -106,13 +88,8 @@ init()
               >
                 <MenuItem onClick={handleClose} component={Link} to="/settings"><Settings />User Theme Settings</MenuItem>
                 <MenuItem onClick={onLogout}><Lock />Logut</MenuItem>
-                <MenuItem onClick={onDeleteAllDialogOpen}><DeleteForever />Delete all locally saved data</MenuItem>
               </Menu>
             </div>
-               <DeleteAllDialog
-                isOpen={isDeleteAllDialogOpen}
-                close={()=> setIsDeleteAllDialogOpen()}
-               />
         </Toolbar>
       </AppBar>
       <Drawer
@@ -129,11 +106,13 @@ init()
         </div>
         <Divider />
         <List> <ListItem button>
+      <Tooltip title="Search">
       <ListItemIcon>
         <Search />
       </ListItemIcon>
-      <ListItemText primary="Search for room" />
-    </ListItem>
+      </Tooltip>
+      {drawerIsOpen && <ListItemText primary="Search for room" />}
+      </ListItem>
     </List>
         <Divider />
         <List>...</List>

@@ -2,7 +2,7 @@ import { Card, CardContent, Grid, Typography, Switch, InputLabel, Button } from 
 import { Color, ColorPicker, createColor } from "material-ui-color"
 import { useEffect, useState } from "react"
 import { useToggle } from "react-use"
-import { user } from "../../db/gunDB"
+import { getAuthUser } from "../../db"
 import { notify } from "../../notification/Notification"
 import { initialThemeSettings, ThemeSettings } from "../../settings/theme/themeSettings"
 import Skeleton from "../shared/Skeleton"
@@ -40,7 +40,7 @@ export const UserSettings = () => {
 
     useEffect(() => {
         ( async () => {
-            const settings = await (user.get('themeSettings').once(data => {
+            const settings = await (getAuthUser().get('themeSettings').once(data => {
 
                 setupTheme({...initialThemeSettings,...data})}) as any)
             if (!settings) {
@@ -56,8 +56,8 @@ export const UserSettings = () => {
   
 
     const onSave = async () => {
-        setIsLoading(true)
-         await user.get("themeSettings").put({
+            setIsLoading(true)
+         await getAuthUser().get("themeSettings").set({
             primary: `#${colorPrimary.hex}`,
             contrastTextPrimary: `#${colorContrastPrimary.hex}`,
             secondary: `#${colorSecondary.hex}`,
@@ -71,13 +71,8 @@ export const UserSettings = () => {
             warning: `#${colorWarning.hex}`,
             contrastTextWarning: `#${colorContrastWarning.hex}`,
             darkMode: darkMode
-        }, cb => {
-            setIsLoading(false)
-            if (cb.err) {
-                return notify(cb.err?.message, 'error')
-            }
-            notify("Success saving theme settings", 'success');
         })
+        setIsLoading(false);
     }
 
     const onDefaultSettings = () => {

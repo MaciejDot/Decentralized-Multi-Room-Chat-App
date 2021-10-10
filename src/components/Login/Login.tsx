@@ -1,14 +1,11 @@
-import { Avatar, Box, Button, ButtonGroup, Card, CssBaseline, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton, InputAdornment, Link, Paper, TextField, Tooltip, Typography, useMediaQuery } from "@material-ui/core"
+import { Avatar, Box, Button, ButtonGroup, Card, InputAdornment, Link, Paper, TextField, Tooltip, Typography, useMediaQuery } from "@material-ui/core"
 import { AccountCircle, ArrowBackIos, Chat, DeleteForever, Lock, LockOutlined } from "@material-ui/icons";
 import { Alert } from "@material-ui/lab";
 import { useMemo, useState } from "react"
-import { useToggle } from "react-use";
-import { destroySavedAppData, user } from "../../db/gunDB";
+import { getUnAuthUser } from "../../db";
 import useTypedStyles from "../../hooks/useTypedStyles";
 import { notify } from "../../notification/Notification";
 import { loginClasses } from "../../theme/loginClasses";
-import { DeleteAllDialog } from "../deleteAllDialog/DeleteAllDialog";
-import { NetworkGraphVisualization } from "../networkGraph/NetworkGraphVisualization";
 
 function Copyright() {
     return (
@@ -32,7 +29,7 @@ export const Login = () => {
 
     const loginHandler = () => {
         !isLoading && setIsLoading(true)
-        user.auth(username, password, (args)=>{
+        getUnAuthUser().auth(username, password, (args)=>{
             setIsLoading(false)
             if((args as any).err !== undefined){
                 return notify((args as any).err, 'error')
@@ -42,7 +39,7 @@ export const Login = () => {
 
     const createAnAcoountHandler = () =>{
         setIsLoading(true)
-        user.create(username, password, args => {
+        getUnAuthUser().create(username, password, args => {
             if((args as any).err !== undefined){
                 return notify((args as any).err, 'error')
             }
@@ -52,7 +49,6 @@ export const Login = () => {
     }
     const matches = useMediaQuery('(max-width:501px)');
 
-    const [deleteAllDialogIsOpen, setIsDeleteDialogIsOpen] = useToggle(false)
 
     const CardWrapper :any = useMemo(()=>  matches ? (props:{children:any}) =><div style={{backgroundColor:'#424242', minHeight:'100vh', minWidth:'100vw'}}>{props.children}</div>:(props:{children:any}) =><Card style=
     {{zIndex: 1, position: 'absolute', width: '500px',
@@ -131,26 +127,8 @@ export const Login = () => {
                 Create An Account
             </Button>
             <Box mt={5}>
-                <Tooltip title="All Localy saved data will be delete. Possibility of losing access to all acounts that were logged in on this browser">
-                <Button
-                  fullWidth
-                  variant="contained"
-                  color="secondary"
-                  className={classes.submit}
-                  onClick={() => setIsDeleteDialogIsOpen()}
-                  startIcon={ <DeleteForever/>}
-                >
-                       Delete all locally saved data
-                </Button>
-                </Tooltip>
-            </Box>
-            <Box mt={5}>
               <Copyright />
             </Box>
-            <DeleteAllDialog
-                isOpen={deleteAllDialogIsOpen}
-                close={()=>setIsDeleteDialogIsOpen()}
-            />
             </form>
       </CardWrapper>
 }

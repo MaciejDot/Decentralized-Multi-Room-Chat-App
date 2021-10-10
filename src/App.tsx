@@ -3,7 +3,7 @@ import { resolveValue, Toaster } from "react-hot-toast";
 import { Route, Switch } from "react-router-dom";
 import { useTimeoutFn } from "react-use";
 import { Login } from "./components/Login/Login";
-import { gunDB, user } from "./db/gunDB";
+
 import { notify } from "./notification/Notification";
 import { Helmet } from "react-helmet"
 import { AppMenu } from "./components/AppMenu/AppMenu";
@@ -15,21 +15,21 @@ import { createTheme, ThemeOptions, useMediaQuery } from "@material-ui/core";
 import Color from 'color'
 import { NetworkGraphVisualization } from "./components/networkGraph/NetworkGraphVisualization";
 import { Room } from "./components/Room/Room";
+import { getAuthUser, getUnAuthUser, gunDB } from "./db";
 function App() {
   const [isLoading, setIsLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [themeSettings, setThemeSettings] = useState(initialThemeSettings)
   useEffect(() => {
-      (gunDB as any).on('auth', async(event) => {
-        const alias = await user.get('alias'); 
-        notify(`Logged in as ${alias}`, 'success')
+      gunDB.on('auth', () => {
+        notify(`Logged in as ${getAuthUser().is.alias}`, 'success')
         setIsAuthenticated(true)
       })
   },[])
 
   useEffect(() => {
     if(isAuthenticated){
-      user.get('themeSettings').once(data => 
+      getAuthUser().get('themeSettings').once(data => 
         JSON.stringify({...initialThemeSettings,...data}) !== JSON.stringify(themeSettings) && setThemeSettings({...initialThemeSettings,...data}))
     }
   },[isAuthenticated])
@@ -55,17 +55,9 @@ function App() {
 
   const theme = useMemo(()=> createTheme(setupTheme(themeSettings)), [themeSettings])
 
-
-  useEffect(()=> console.log(themeSettings),[themeSettings])
-
-
   useEffect(()=>{
-      const is = (user.recall({sessionStorage: true}, 'recall') as any).is;
+      let _ = getUnAuthUser().recall({sessionStorage}).is;
       setIsLoading(false);
-      if(is){
-        setIsAuthenticated(true)
-      }
-
   },[])
 
   const PrivateRoute = (props: {path: string, title: () =>string, children?:ReactNode}) => {

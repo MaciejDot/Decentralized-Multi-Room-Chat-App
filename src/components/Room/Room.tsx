@@ -32,19 +32,6 @@ export const Room = () =>{
 
     useEffect(()=>{
     (async ()=>{
-        let pair ;
-        await (SEA).pair(data => pair = data);
-        let pass = "only-one"
-        let proof = await SEA.work(pass, pair);
-        console.log(proof,pair);
-        let cryp = await SEA.encrypt("data", proof);
-        let decryp = await SEA.decrypt(cryp, proof)
-        proof = await SEA.work(pass, pair);
-        let decryp2 = await SEA.decrypt(cryp, proof)
-        var data = await SEA.sign(cryp, pair);
-console.log(data);
-var msg = await SEA.verify(data, pair.pub);
-        console.log(decryp, decryp2, msg)
     })()
     },[])
 
