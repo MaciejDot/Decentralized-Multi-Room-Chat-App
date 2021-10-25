@@ -1,23 +1,22 @@
-import { Room } from "@material-ui/icons";
 import Gun, { SEA } from "gun";
 import 'gun/axe'
 import 'gun/sea'
 import { IGunConstructorOptions } from "gun/types/options";
-import { RoomDefinition } from "./types/RoomDefinition";
+import { AckCallback } from "gun/types/types";
 
-
-type AuthArgs = [username: string, password: string, callback: (data: { err?: string }) => any] | [ pair :SEAPair, callback: (data: { err?: string }) => any]
+type AuthArgs = [username: string, password: string, callback: (data: { err?: string }) => any] | [pair: SEAPair, callback: (data: { err?: string }) => any]
 
 export interface GunUser<T> {
     is?: undefined
-    recall: (opt?: { sessionStorage: typeof sessionStorage }) => GunUser<T> |AuthenticatedGunUser<T>
-    auth: (...t: AuthArgs) => GunUser<T> |AuthenticatedGunUser<T>
-    create: (...t: AuthArgs) => GunUser<T> |AuthenticatedGunUser<T>
+    recall: (opt?: { sessionStorage: typeof sessionStorage }) => GunUser<T> | AuthenticatedGunUser<T>
+    auth: (...t: AuthArgs) => GunUser<T> | AuthenticatedGunUser<T>
+    create: (...t: AuthArgs) => GunUser<T> | AuthenticatedGunUser<T>
 }
 
-export interface AuthenticatedGunUser<T>{
+
+export interface AuthenticatedGunUser<T> {
     is: {
-        alias: string
+        alias: string | SEAPair
         epub: string
         pub: string
     }
@@ -25,37 +24,38 @@ export interface AuthenticatedGunUser<T>{
     leave: () => void
 }
 
-type AuthenticatedGunUserTree<T , TKey extends keyof T> = AuthenticatedGunUser<T[TKey]> & GunTree<T,TKey>;
+type AuthenticatedGunUserTree<T, TKey extends keyof T> = AuthenticatedGunUser<T[TKey]> & GunTree<T, TKey>;
 
 interface GunGet<T> {
-    get: <TKey extends keyof T>(name: TKey) => GunTree<T,TKey> & GunGet<T[TKey]> &Promise<T[TKey]>
+    get: <TKey extends keyof T>(name: TKey) => GunTree<T, TKey> & GunGet<T[TKey]> & Promise<T[TKey]>
 }
 
-type GunTree<T , TKey extends keyof T> = {
-    on: (callback:(state:T[TKey], key: TKey) => any) => void
-    once: (callback: (state:T[TKey], key: TKey) => any) => void
-    put: (state: T[TKey]) => void,
+type GunTree<T, TKey extends keyof T> = {
+    on: (callback: (state: T[TKey], key: TKey) => any) => { off: () => void }
+    once: (callback: (state: T[TKey], key: TKey) => any) => void
+    put: (state: T[TKey], callback?: AckCallback, options?: { opt?: { cert?: string } }) => void,
     set: (state: T[TKey]) => void,
     map: (match?: any) => AuthenticatedGunUserTree<T[TKey], keyof T[TKey]>
 }
 
 
-export function isUserAuthenticated  <T>(user : GunUser<T> |AuthenticatedGunUser<T>): user is AuthenticatedGunUser<T>{
+export function isUserAuthenticated<T>(user: GunUser<T> | AuthenticatedGunUser<T>): user is AuthenticatedGunUser<T> {
     return !!user.is
 }
 
 
-interface GunDefinition<V> extends GunGet<V> {
+interface GunDefinition {
     user: <T>() => GunUser<T> | AuthenticatedGunUser<T>,
-    on: (eventName: 'auth', callback: () => any) => void,
+    get: <T, TKey extends keyof T>(name: TKey) => GunTree<T, TKey> & GunGet<T[TKey]> & Promise<T[TKey]>,
+    on: (eventName: 'auth', callback: () => any) => { off: () => void },
 }
 
 const TypedGun = Gun as any as {
-    <V>(options?: string | string[] | IGunConstructorOptions): GunDefinition<V>;
-    new <V>(options?: string | string[] | IGunConstructorOptions): GunDefinition<V>;
+    (options?: string | string[] | IGunConstructorOptions): GunDefinition;
+    new(options?: string | string[] | IGunConstructorOptions): GunDefinition;
 }
 
-interface SEAPair{
+export interface SEAPair {
     epriv: string
     epub: string
     priv: string
@@ -66,16 +66,37 @@ interface SEAPair{
 type Authority = SEAPair
 
 export const TypedSEA = SEA as any as {
+    secret: (epubKey: string, pair: SEAPair) => Promise<string>
     pair: () => Promise<SEAPair>
-    sign: (data:any, pair: SEAPair) => Promise<string>
+    sign: (data: any, pair: SEAPair) => Promise<string>
     verify: <T>(data: string, pair: SEAPair | string) => Promise<T | undefined>
-    encrypt: (data:any, pair: SEAPair | string) => Promise<string>
-    decrypt: <T>(data:string, pair: SEAPair | string) => Promise<T| undefined>
-    certify: (user : string | string[]| {pub:string} | {pub:string}[], policies: any, pair: Authority, callback: (cert:string) => any, opt?: { blacklist: string }) => Promise<string>
+    encrypt: (data: any, pair: SEAPair | string) => Promise<string>
+    decrypt: <T>(data: string, pair: SEAPair | string) => Promise<T | undefined>
+    certify: (user: string | string[] | { pub: string } | { pub: string }[], policies: any, pair: Authority, callback: (cert: string) => any, opt?: { blacklist?: string, expiry?: number }) => Promise<string>
 }
 
-type Pre<T extends string> = `~${T}`
-
-export const GetGunInstance = (options?: string | string[] | IGunConstructorOptions)=>{
-    return new TypedGun<Record<Pre<string>, RoomDefinition>>(options);
+export const GetGunInstance = () => {
+    return new TypedGun({
+        peers: [
+          //  'http://gun-matrix.herokuapp.com/gun',
+         //   'https://gun-ams1.maddiex.wtf:443/gun',
+        //    'https://gun-sjc1.maddiex.wtf:443/gun',
+            'https://shockblox-gun-server.herokuapp.com/gun',
+        //    'https://mg-gun-manhattan.herokuapp.com/gun',
+       //     'https://gunmeetingserver.herokuapp.com/gun',
+            //'https://gun-eu.herokuapp.com/gun',
+           // 'https://gunjs.herokuapp.com/gun',
+           // 'https://myriad-gundb-relay-peer.herokuapp.com/gun',
+           // 'https://gun-armitro.herokuapp.com/',
+        //    'https://fire-gun.herokuapp.com/gun',
+          //  'http://34.101.247.230:8765/gun'
+        ]
+    });
 }
+
+export const getUserSeaPair = () => {
+    return JSON.parse(sessionStorage.pair) as SEAPair
+}
+
+
+/*copy of db must be in store and it must register subscriptions*/

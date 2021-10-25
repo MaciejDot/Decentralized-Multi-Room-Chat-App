@@ -1,17 +1,26 @@
-import { GetGunInstance, isUserAuthenticated } from "./typedGun";
+import { AuthenticatedGunUser, GetGunInstance, GunUser, isUserAuthenticated } from "./typedGun";
 import { UserDefinition } from "./types/UserDefinition";
 
 export const gunDB = GetGunInstance();
-const user = gunDB.user<UserDefinition>();
+export const user = gunDB.user<UserDefinition>();
 
 export const getUnAuthUser = () =>{
-    if(!isUserAuthenticated(user))
-        return user
-    throw {"err":"User is already authenticated"}
+    return getUnAuthUserByUser(user)
 }
 
 export const getAuthUser = () =>{
-    if(isUserAuthenticated(user))
-        return user
+    return getAuthUserByUser(user)
+}
+
+
+export const getUnAuthUserByUser = <T>(userDef : GunUser<T> | AuthenticatedGunUser<T>) =>{
+    if(!isUserAuthenticated(userDef))
+        return userDef
+    throw {"err":"User is already authenticated"}
+}
+
+export const getAuthUserByUser =  <T>(userDef : GunUser<T> | AuthenticatedGunUser<T>)=>{
+    if(isUserAuthenticated(userDef))
+        return userDef
     throw {"err":"User is not authenticated"}
 }

@@ -1,45 +1,46 @@
-import Gun, { SEA } from "gun";
-import 'gun/axe'
-import 'gun/sea'
+import { getAuthUser, getAuthUserByUser, getUnAuthUserByUser } from "../..";
+import { GetGunInstance, getUserSeaPair, TypedSEA } from "../../typedGun";
+import { RoomDefinition } from "../../types/RoomDefinition";
+import { DecryptedRoomData } from "../../types/UserDefinition";
 
-export interface RoomOptions{
+
+export interface RoomOptions {
+  name: string,
+  messageExpirationInMiliSeconds?: number
+}
+
+
+export const createARoom = async (options: RoomOptions) => {
+  const { messageExpirationInMiliSeconds, name } = options;
+  const roomPair = await TypedSEA.pair();
+  const _newGunInstance = GetGunInstance();
+  const roomProxy = _newGunInstance.user<RoomDefinition>();
+  const unAuthProxy = getUnAuthUserByUser(roomProxy);
+  await unAuthProxy.create(roomPair, async ({ err }) => {
+    if (err)
+      throw err;
+    //save room information to user graph
+    const pair = getUserSeaPair();
+
+    const authUser = getAuthUser();
+
+    const adminCertificate = await TypedSEA.certify(authUser.is.pub, { '*': '*' }, roomPair, null, { blacklist: 'ban' })
+
+    const roomFirstSecret = await TypedSEA.pair()
+
+    const encrypted = await TypedSEA.encrypt({ roomPair, adminCertificate, roomFirstSecret } as DecryptedRoomData, pair)
+
+    authUser.get("rooms").get(roomPair.pub).put(encrypted)
+    const authProxy = getAuthUserByUser(roomProxy);
+
+    authProxy.get("options").put({
+        encryptedMessageExpirationInMiliSeconds: await TypedSEA.encrypt(messageExpirationInMiliSeconds, roomFirstSecret),
+        encryptedName: await TypedSEA.encrypt(name, roomFirstSecret)
+    })
+
+    authProxy.get("pubKeys").get(Math.random()).put(await TypedSEA.encrypt(pair.pub, roomFirstSecret))
+
+  });
+
 
 }
-/*
-export const createARoom = (options?:RoomOptions) =>{
-    const roomPair = (await SEA.pair(()=>{})) as any as {pub: string, priv :string};
-    const _newGunInstance = new Gun();
-    
-    await _newGunInstance.user().create(roomPair.pub, roomPair.priv, (data) =>{
-    let enc = await SEA.encrypt(roomPair, Alice)
-    gun.user()
-  .get('host')
-  .get(Alice.pub)
-  .put(enc)
-
-// If you want to let Alice save her room keys in her private graph, you'll have to give her a second instance of Gun (connected to the same peers). She will log in with her own key and store the encrypted room keys there
-
- // Alice wants to manage the banlist with her personal ban certificate
- let banCert = await SEA.certify(Alice.pub, { '*':'ban' }, room)
- gun.user()
-  .get('certs')
-  .get('ban')
-  .get(Alice.pub)
-  .put(banCert)
-
- // Iterate over the list of verified users public keys and...
- users.forEach(async pub => {
-
-   // Issue a certificate for each user to write personal items to the '#links' path. The hash symbol enforces content-addressing for any item put in it
-   const cert = await SEA.certify( pub, { '*':'#links', '+': '*' }, room, null, { blacklist: 'ban' } ) 
-
-   // put the user certificate to a 'certs/links' path for ease of later use (make sure not to use `#` hash symbol here as it will impose content-addressing and putting not hashed item will fail)
-   gun.user()
-    .get('certs')
-    .get('links')
-    .get(pub)
-    .put(cert) 
-    });
-
-
-}*/

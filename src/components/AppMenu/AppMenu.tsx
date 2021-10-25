@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
@@ -43,6 +43,12 @@ export const AppMenu = (props: {children?:any}) =>{
     setDrawerOpen();
   };
 
+  const [alias , setAlias] = useState("")
+
+  useEffect(()=>{
+    getAuthUser().get("alias").once(x=> setAlias(x));
+  },[])
+
   return (
         <div className={classes.root}>
       <CssBaseline />
@@ -69,7 +75,7 @@ export const AppMenu = (props: {children?:any}) =>{
                 color="inherit"
               >
                 <AccountCircle />
-                <Typography variant="subtitle1">{getAuthUser().is.alias}</Typography>
+                <Typography variant="subtitle1">{alias}</Typography>
               </IconButton>
               <Menu
                 id="menu-appbar"

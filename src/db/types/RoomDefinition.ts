@@ -22,19 +22,33 @@ if someone changes passwords of proxy others cant write
 
 */
 
+
+type EncryptionPubKeyData = Record<string, string>
+
+
 interface Message{
-    pub:string,
-    message:string
+    encryptedPubKey: string,
+    encryptedmessage: EncryptionPubKeyData
 }
 
 interface Options {
-    expirationOfMessages?: number
+    encryptedMessageExpirationInMiliSeconds?: string,
+    encryptedName?: string
 }
 
 export interface RoomDefinition{
-    options: Options
-    certificates: Record<string, Record<number, string>>
-    // actual chat data index-date -message certified or more sophisticated solution ---> name:imdex: data no possibility of write
-    chat:Record<number,Message>
+    options: Options,
+
+    pubKeys: Record<number, string>
+    waitLinkCertificate:
+    Record<number, { 
+        /*max 1hour*/
+        encryptedExpiry: string,
+        encryptedRandomString: string
+
+    }>,
+
+    waitUsers: Record<string, string>
+    chat:Record<number,Message>,
     ban: Record<string, boolean>
 }

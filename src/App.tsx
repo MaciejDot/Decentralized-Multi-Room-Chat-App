@@ -3,7 +3,7 @@ import { resolveValue, Toaster } from "react-hot-toast";
 import { Route, Switch } from "react-router-dom";
 import { useTimeoutFn } from "react-use";
 import { Login } from "./components/Login/Login";
-
+import { useHistory } from 'react-router'
 import { notify } from "./notification/Notification";
 import { Helmet } from "react-helmet"
 import { AppMenu } from "./components/AppMenu/AppMenu";
@@ -16,13 +16,14 @@ import Color from 'color'
 import { NetworkGraphVisualization } from "./components/networkGraph/NetworkGraphVisualization";
 import { Room } from "./components/Room/Room";
 import { getAuthUser, getUnAuthUser, gunDB } from "./db";
+import { Provider } from "react-redux";
+import { createStoreInstance } from "./store/createStore";
 function App() {
   const [isLoading, setIsLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [themeSettings, setThemeSettings] = useState(initialThemeSettings)
   useEffect(() => {
       gunDB.on('auth', () => {
-        notify(`Logged in as ${getAuthUser().is.alias}`, 'success')
         setIsAuthenticated(true)
       })
   },[])
@@ -55,9 +56,38 @@ function App() {
 
   const theme = useMemo(()=> createTheme(setupTheme(themeSettings)), [themeSettings])
 
+  const history = useHistory();
+
+  //if not production
+  useEffect(()=> {
+    //interface extension 
+    /*export class DebugRouter extends BrowserRouter {
+    constructor(props) {
+        super(props);
+        console.log('initial history is: ', JSON.stringify(this.history, null, 2))
+        this.history.listen((location, action) => {
+            console.log(
+                `The current URL is ${location.pathname}${location.search}${location.hash}`
+            )
+            console.log(`The last navigation action was ${action}`, JSON.stringify(this.history, null, 2));
+        });
+    }
+}*/
+   console.log(history.location)
+  },[history.location])
+
+
   useEffect(()=>{
-      let _ = getUnAuthUser().recall({sessionStorage}).is;
+      const is = getUnAuthUser().recall({sessionStorage}).is;
       setIsLoading(false);
+      console.log(window.location.hash);
+      
+      if(!is && !window.location.hash.startsWith('#/Login')){
+        return history.push(`/Login/${encodeURIComponent(window.location.hash.replace('#/',''))}`);
+      }
+      if(is && window.location.hash.startsWith('#/Login')){
+        return history.push('')
+      }
   },[])
 
   const PrivateRoute = (props: {path: string, title: () =>string, children?:ReactNode}) => {
@@ -72,10 +102,10 @@ function App() {
 
   const matches = useMediaQuery('(max-width:501px)')
 
+  const store = useMemo(createStoreInstance,[])
 
-  return <ThemeProvider theme={theme}>
+  return   <Provider store={store}><ThemeProvider theme={theme}>
     <div style={{justifyContent: 'center', display: 'flex'}}>
-    {/*background*/}
     {!isLoading  && !isAuthenticated  && !matches && <NetworkGraphVisualization/>}
     {!isLoading  && <div style={{position:'absolute', width:'100vw', justifyContent: 'center', display: 'flex'}}><Toaster
     >
@@ -92,12 +122,15 @@ function App() {
       </PrivateRoute>
       <PrivateRoute path="/settings" title={() =>`Settings`}>
          <UserSettings/>
-      </PrivateRoute></>:
-      <Route path="*">
+      </PrivateRoute></>:<>
+      <Route path="/Login/:returnUrl">
         <Login/>
       </Route>
+      <Route path="/Login/">
+      <Login/>
+    </Route></>
         }
-   </Switch></div>}</div></ThemeProvider>
+   </Switch></div>}</div></ThemeProvider></Provider>
 }
 
 export default App;
