@@ -28,5 +28,5 @@ export const initialThemeSettings: ThemeSettings = {
     success: colors.green[500],
     error: colors.red[300],
     warning: colors.orange[300],
-    darkMode: true
+    darkMode: false
 }

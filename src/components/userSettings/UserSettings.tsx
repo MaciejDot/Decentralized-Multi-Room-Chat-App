@@ -2,7 +2,7 @@ import { Card, CardContent, Grid, Typography, Switch, InputLabel, Button } from 
 import { Color, ColorPicker, createColor } from "material-ui-color"
 import { useEffect, useState } from "react"
 import { useToggle } from "react-use"
-import { getAuthUser } from "../../db"
+//import { getAuthUser } from "../../db"
 import { notify } from "../../notification/Notification"
 import { initialThemeSettings, ThemeSettings } from "../../settings/theme/themeSettings"
 import Skeleton from "../shared/Skeleton"
@@ -39,7 +39,7 @@ export const UserSettings = () => {
     }
 
     useEffect(() => {
-        ( async () => {
+       /* ( async () => {
             const settings = await (getAuthUser().get('themeSettings').once(data => {
 
                 setupTheme({...initialThemeSettings,...data})}) as any)
@@ -47,7 +47,7 @@ export const UserSettings = () => {
                 setupTheme(initialThemeSettings);
             }
             setIsLoading(false)
-        })()
+        })()*/
     }, [])
 
   
@@ -57,7 +57,7 @@ export const UserSettings = () => {
 
     const onSave = async () => {
             setIsLoading(true)
-         await getAuthUser().get("themeSettings").set({
+        /* await getAuthUser().get("themeSettings").set({
             primary: `#${colorPrimary.hex}`,
             contrastTextPrimary: `#${colorContrastPrimary.hex}`,
             secondary: `#${colorSecondary.hex}`,
@@ -71,7 +71,7 @@ export const UserSettings = () => {
             warning: `#${colorWarning.hex}`,
             contrastTextWarning: `#${colorContrastWarning.hex}`,
             darkMode: darkMode
-        })
+        })*/
         setIsLoading(false);
     }
 

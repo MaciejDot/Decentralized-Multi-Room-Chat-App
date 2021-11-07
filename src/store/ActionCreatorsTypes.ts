@@ -1,16 +1,12 @@
-import { ActionTypesEnum } from "./ActionTypesEnum";
+import { ActionTypes } from "./ActionTypes";
 
-export function createAction<T extends ActionTypesEnum, P = undefined, F extends Record<string,any> = undefined>(
+export function createAction<T extends ActionTypes, P = undefined, F extends Record<string,any> = undefined>(
     type: T,
     payload?: P,
     meta?: F
 ) {
     return  { type, payload, meta }
-} 
-/**
- * @copyright Copyright (c) 2018 Martin Hochel
- * Borrowed from the rex-tils library
- */
+}
 
 type ActionsCreatorsMapObject = Record<string, (...args:any[]) => ReturnType< typeof createAction>>
 

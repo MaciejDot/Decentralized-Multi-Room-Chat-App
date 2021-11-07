@@ -1,6 +1,6 @@
 import React, { ReactNode, useEffect, useMemo, useState } from "react";
 import { resolveValue, Toaster } from "react-hot-toast";
-import { Route, Switch } from "react-router-dom";
+import { HashRouter, Route, Switch } from "react-router-dom";
 import { useTimeoutFn } from "react-use";
 import { Login } from "./components/Login/Login";
 import { useHistory } from 'react-router'
@@ -15,25 +15,23 @@ import { createTheme, ThemeOptions, useMediaQuery } from "@material-ui/core";
 import Color from 'color'
 import { NetworkGraphVisualization } from "./components/networkGraph/NetworkGraphVisualization";
 import { Room } from "./components/Room/Room";
-import { getAuthUser, getUnAuthUser, gunDB } from "./db";
 import { Provider } from "react-redux";
 import { createStoreInstance } from "./store/createStore";
+import { useTypedSelector } from "./hooks/useTypedSelector";
+import { useTypedDispatch } from "./hooks/useTypedDispatch";
+import { userActions } from "./store/actions";
+import { CreateAnAccount } from "./components/createAnAccount/CreateAnAccount";
 function App() {
-  const [isLoading, setIsLoading] = useState(true)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const { isUserAuthorized, isUserRecallComplete} = useTypedSelector(state=> state.user);
   const [themeSettings, setThemeSettings] = useState(initialThemeSettings)
+  const dispatch = useTypedDispatch();
+  useEffect(()=>{dispatch(userActions.recallUser())},[dispatch])
   useEffect(() => {
-      gunDB.on('auth', () => {
-        setIsAuthenticated(true)
-      })
-  },[])
-
-  useEffect(() => {
-    if(isAuthenticated){
+    /*if(isUserAuthorized){
       getAuthUser().get('themeSettings').once(data => 
         JSON.stringify({...initialThemeSettings,...data}) !== JSON.stringify(themeSettings) && setThemeSettings({...initialThemeSettings,...data}))
-    }
-  },[isAuthenticated])
+    }*/
+  },[isUserAuthorized])
 
   const setupColor = (color: string, contrastText: string) =>({
     main: color,
@@ -60,35 +58,20 @@ function App() {
 
   //if not production
   useEffect(()=> {
-    //interface extension 
-    /*export class DebugRouter extends BrowserRouter {
-    constructor(props) {
-        super(props);
-        console.log('initial history is: ', JSON.stringify(this.history, null, 2))
-        this.history.listen((location, action) => {
-            console.log(
-                `The current URL is ${location.pathname}${location.search}${location.hash}`
-            )
-            console.log(`The last navigation action was ${action}`, JSON.stringify(this.history, null, 2));
-        });
-    }
-}*/
    console.log(history.location)
   },[history.location])
 
 
   useEffect(()=>{
-      const is = getUnAuthUser().recall({sessionStorage}).is;
-      setIsLoading(false);
-      console.log(window.location.hash);
+      if(!isUserRecallComplete)
+        return;
+      if(!isUserAuthorized && ! history.location.pathname.startsWith('/Login') && !history.location.pathname.startsWith('/CreateAnAccount'))
+         history.push(`/Login`);
       
-      if(!is && !window.location.hash.startsWith('#/Login')){
-        return history.push(`/Login/${encodeURIComponent(window.location.hash.replace('#/',''))}`);
-      }
-      if(is && window.location.hash.startsWith('#/Login')){
-        return history.push('')
-      }
-  },[])
+      if(isUserAuthorized && (history.location.pathname.startsWith('/Login') || history.location.pathname.startsWith('/CreateAnAccount')))
+         history.push('/')
+      
+  },[isUserAuthorized, isUserRecallComplete, history])
 
   const PrivateRoute = (props: {path: string, title: () =>string, children?:ReactNode}) => {
     return <Route path={props.path} exact><Helmet>
@@ -100,19 +83,17 @@ function App() {
     </Route>
   }
 
-  const matches = useMediaQuery('(max-width:501px)')
 
-  const store = useMemo(createStoreInstance,[])
 
-  return   <Provider store={store}><ThemeProvider theme={theme}>
+  return  <ThemeProvider theme={theme}>
     <div style={{justifyContent: 'center', display: 'flex'}}>
-    {!isLoading  && !isAuthenticated  && !matches && <NetworkGraphVisualization/>}
-    {!isLoading  && <div style={{position:'absolute', width:'100vw', justifyContent: 'center', display: 'flex'}}><Toaster
+    {/*!isLoading  && !isAuthenticated  && !matches && <NetworkGraphVisualization/>*/}
+    {isUserRecallComplete  && <div style={{position:'absolute', width:'100vw', justifyContent: 'center', display: 'flex'}}><Toaster
     >
         {(t) => <>{resolveValue(t.message, t)}</>}
         </Toaster>
 
-        <Switch> {    isAuthenticated ?
+        <Switch> {    isUserAuthorized ?
   <>
      <PrivateRoute path="/" title={() =>`Dashboard`}>
         <Dashboard/>
@@ -126,11 +107,19 @@ function App() {
       <Route path="/Login/:returnUrl">
         <Login/>
       </Route>
-      <Route path="/Login/">
+      <Route path="/Login">
       <Login/>
+    </Route>
+    <Route path="/CreateAnAccount">
+      <CreateAnAccount/>
     </Route></>
         }
-   </Switch></div>}</div></ThemeProvider></Provider>
+   </Switch></div>}</div></ThemeProvider>
 }
 
-export default App;
+const AppWraper =() => {   
+  const store = useMemo(createStoreInstance,[]);
+  return  <HashRouter><Provider store={store}><App/></Provider></HashRouter>
+};
+
+export default AppWraper;

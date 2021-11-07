@@ -14,7 +14,9 @@ import { useToggle } from 'react-use';
 import { Container, CssBaseline, Divider, Drawer, List, ListItem, ListItemIcon, ListItemText, Tooltip } from '@material-ui/core';
 import clsx from 'clsx';
 import { Link } from 'react-router-dom';
-import { getAuthUser } from '../../db';
+import { useTypedSelector } from '../../hooks/useTypedSelector';
+import { useTypedDispatch } from '../../hooks/useTypedDispatch';
+import { userActions } from '../../store/actions';
 
 export const AppMenu = (props: {children?:any}) =>{
   const classes = useTypedStyles(appMenuClasses);
@@ -24,13 +26,15 @@ export const AppMenu = (props: {children?:any}) =>{
     setAnchorEl(event.currentTarget);
   };
 
+  const dispatch= useTypedDispatch();
+
   const handleClose = () => {
     setAnchorEl(null);
   };
 
   const onLogout = () =>{
-      getAuthUser().leave();
-      document.location.reload();
+      dispatch(userActions.logoutUser())
+      //document.location.reload();
   }
 
   const [drawerIsOpen, setDrawerOpen] = useToggle(false);
@@ -43,10 +47,10 @@ export const AppMenu = (props: {children?:any}) =>{
     setDrawerOpen();
   };
 
-  const [alias , setAlias] = useState("")
+  const alias = useTypedSelector(state => state.user.alias);
 
   useEffect(()=>{
-    getAuthUser().get("alias").once(x=> setAlias(x));
+   // getAuthUser().get("alias").once(x=> setAlias(x));
   },[])
 
   return (

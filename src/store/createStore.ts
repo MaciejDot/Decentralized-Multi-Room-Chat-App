@@ -3,22 +3,41 @@ import createSagaMiddleware from 'redux-saga'
 import userReducer from './reducers/user/userReducer'
 import { recallUserSaga } from './sagas/user/recallUserSaga'
 import logger from 'redux-logger'
-import { GetGunInstance, TypedSEA } from '../db/typedGun'
-import { user, getAuthUser, getUnAuthUser } from '../db'
-
+import { loginUserSaga } from './sagas/user/loginUserSaga'
+import { userPropertiesListenerSaga } from './sagas/user/userPropertiesListenerSaga'
+import Gun from 'gun'
+import { IGun } from '../temporary-gun-types/gun/IGun'
+//import 'gun/axe'
+import 'gun/sea'
+import { logoutUserSaga } from './sagas/user/logoutUserSaga'
+import { createUserAccountSaga } from './sagas/user/createUserAccountSaga'
 
 const getSagaContext = () => {
-    const dbGlobalContext = GetGunInstance()
-    const sea = TypedSEA
-    const dbAuthUserContextGetter = getAuthUser;
-    const dbUnAuthUserContextGetter = getUnAuthUser;
+    const gun = Gun as any as IGun;
+    
+    const dbGlobalContext = new gun( //{peers: [
+        //  'http://gun-matrix.herokuapp.com/gun',
+       //   'https://gun-ams1.maddiex.wtf:443/gun',
+      //    'https://gun-sjc1.maddiex.wtf:443/gun',
+        //  'https://shockblox-gun-server.herokuapp.com/gun',
+      ////    'https://mg-gun-manhattan.herokuapp.com/gun',
+     //     'https://gunmeetingserver.herokuapp.com/gun',
+          //'https://gun-eu.herokuapp.com/gun',
+         // 'https://gunjs.herokuapp.com/gun',
+         // 'https://myriad-gundb-relay-peer.herokuapp.com/gun',
+         // 'https://gun-armitro.herokuapp.com/',
+      //    'https://fire-gun.herokuapp.com/gun',
+        //  'http://34.101.247.230:8765/gun'
+      //]}
+      )
+    const user =  dbGlobalContext.user()
+    const sea = gun.SEA;
 
     //Build gun context
     return {
         dbGlobalContext,
         sea,
-        dbAuthUserContextGetter,
-        dbUnAuthUserContextGetter
+        user
     }
 }
 //should be async so async module get is possible for logger (bundle-size opt)
@@ -42,6 +61,10 @@ export const createStoreInstance = () => {
     )
     
     sagaMiddleware.run(recallUserSaga)
+    sagaMiddleware.run(loginUserSaga)
+    sagaMiddleware.run(logoutUserSaga)
+    sagaMiddleware.run(userPropertiesListenerSaga)
+    sagaMiddleware.run(createUserAccountSaga)
     return store
 }
 

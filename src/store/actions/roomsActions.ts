@@ -1,5 +1,5 @@
 import { createAction, ActionsUnion } from "../ActionCreatorsTypes";
-import { ActionTypesEnum } from "../ActionTypesEnum";
+import { ActionTypes } from "../ActionTypes";
 
 
 

@@ -1,19 +1,18 @@
-import { Avatar, Box, Button, ButtonGroup, Card, InputAdornment, Link, Paper, TextField, Tooltip, Typography, useMediaQuery } from "@material-ui/core"
-import { AccountCircle, ArrowBackIos, Chat, DeleteForever, Lock, LockOutlined } from "@material-ui/icons";
+import { Avatar, Box, Button, ButtonGroup, Card, IconButton, InputAdornment, Link, Paper, TextField, Tooltip, Typography, useMediaQuery } from "@material-ui/core"
+import { AccountCircle, ArrowBackIos, Chat, DeleteForever, Lock, LockOutlined, Visibility, VisibilityOff } from "@material-ui/icons";
 import { Alert } from "@material-ui/lab";
 import { useEffect, useMemo, useState } from "react"
 import { useHistory, useParams } from "react-router";
-import { useSearchParam } from "react-use";
-import { getAuthUser, getUnAuthUser } from "../../db";
 import { useTypedDispatch } from "../../hooks/useTypedDispatch";
+import { useTypedSelector } from "../../hooks/useTypedSelector";
 import useTypedStyles from "../../hooks/useTypedStyles";
 import { notify } from "../../notification/Notification";
 import { userActions } from "../../store/actions/userActions";
 import { loginClasses } from "../../theme/loginClasses";
+import {memo} from 'react'
 
 
-
-function Copyright() {
+const Copyright = memo(() => {
     return (
       <Typography variant="body2" color="textSecondary" align="center">
         <Link color="inherit" href="https://github.com/MaciejDot/Decentralized-Multi-Room-Chat-App">
@@ -23,47 +22,41 @@ function Copyright() {
         {'.'}
       </Typography>
     );
-  }
+  })
 
 export const Login = () => {
     const classes = useTypedStyles(loginClasses);
-
     const dispatch = useTypedDispatch();
 
-    useEffect(()=>{dispatch(userActions.recallUser())},[dispatch])
-
-    const [isLoading, setIsLoading] = useState(false)
+    const { isUserAuthorizing, userAuthorizationError } = useTypedSelector(state=> state.user);
 
     const [username, setUserName] = useState("");
 
-    const [password, setPassword] = useState("")
-    const history = useHistory();
-
-    const loginHandler = () => {
-        !isLoading && setIsLoading(true)
-        getUnAuthUser().auth(username, password, (args)=>{
-            setIsLoading(false)
-            if((args as any).err !== undefined){
-                return notify((args as any).err, 'error')
-            }
-            console.log(decodeURIComponent(window.location.hash.replace('#/Login','')))
-            history.push(decodeURIComponent(window.location.hash.replace('#/Login','')) ?? "/");
-            notify(`Logged in as ${getAuthUser().is.alias}`, 'success')
-        })
-    }
+    const [password, setPassword] = useState("");
 
     
 
+    const loginHandler = () => dispatch(userActions.loginUser(username, password));
+
     const createAnAcoountHandler = () =>{
-        setIsLoading(true)
+     /*   setIsLoading(true)
         getUnAuthUser().create(username, password, args => {
             if((args as any).err !== undefined){
                 return notify((args as any).err, 'error')
             }
             notify('Signed up was succesfull', 'success')
             loginHandler()
-        })
+        })*/
     }
+
+    //useEffect(()=>{ userAuthorizationError && notify(userAuthorizationError,'error')},[userAuthorizationError])
+
+
+    const history = useHistory();
+
+    
+useEffect(()=>{ dispatch(userActions.resetUserState())},[dispatch])
+
     const matches = useMediaQuery('(max-width:501px)');
 
 
@@ -75,9 +68,11 @@ export const Login = () => {
      msTransform: !matches && 'translateY(15%)',
     minHeight: matches && '100vh',
     }}>{props.children}</Card>,[matches])
+
+    const [isPasswordFieldVisible, setIsPasswordFieldVisible ] = useState(false)
     
     return <CardWrapper>
-        <form className={classes.paper}>
+        <form className={classes.paper} >
             
           <Avatar className={classes.avatar}>
             <Chat />
@@ -92,10 +87,13 @@ export const Login = () => {
               margin="normal"
               required
               fullWidth
+              error={!!userAuthorizationError}
+              helperText={userAuthorizationError}
               id="name"
               label="Name"
               name="name"
               autoComplete="name"
+              disabled={isUserAuthorizing}
               autoFocus
               InputProps={{
                 startAdornment: (
@@ -114,15 +112,24 @@ export const Login = () => {
               fullWidth
               name="password"
               label="Password"
-              type="password"
+              error={!!userAuthorizationError}
+              type={isPasswordFieldVisible ? "text" : "password"}
               id="password"
               autoComplete="current-password"
+              helperText={userAuthorizationError}
+              disabled={isUserAuthorizing}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
                     <Lock/>
                   </InputAdornment>
                 ),
+                endAdornment: (
+                  <InputAdornment position="end" >
+                    <IconButton disabled={isUserAuthorizing} onClick={()=> setIsPasswordFieldVisible(!isPasswordFieldVisible)}>{isPasswordFieldVisible?<VisibilityOff/>:<Visibility/>}</IconButton>
+                  
+                </InputAdornment>
+                )
               }}
             />
             <Button
@@ -130,6 +137,7 @@ export const Login = () => {
               variant="contained"
               color="primary"
               className={classes.submit}
+              disabled={isUserAuthorizing}
               onClick={loginHandler}
             >
               Sign In
@@ -139,7 +147,8 @@ export const Login = () => {
               variant="contained"
               color="primary"
               className={classes.submit}
-              onClick={createAnAcoountHandler}
+              disabled={isUserAuthorizing}
+              href={"#/CreateAnAccount"}
             >
                 Create An Account
             </Button>
